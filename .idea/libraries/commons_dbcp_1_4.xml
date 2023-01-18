@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="commons-dbcp-1.4">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/src/SQL/lib/commons-dbcp-1.4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/src/SQL/lib/commons-pool-1.6.jar!/" />
+      <root url="jar://$PROJECT_DIR$/src/SQL/lib/h2-2.1.214.jar!/" />
+      <root url="jar://$PROJECT_DIR$/src/SQL/lib/postgresql-42.5.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/src/SQL/lib/fscontext-4.6-b01.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

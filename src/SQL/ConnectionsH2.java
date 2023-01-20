@@ -29,7 +29,7 @@ public class ConnectionsH2 {
 
     static {
 
-        try (InputStream input = new FileInputStream("C:\\IdeaProjects\\BigProject1\\src\\SQL\\config.properties")) {
+        try (InputStream input = new FileInputStream(".\\src\\SQL\\config.properties")) {
             properties.load(input);
         }
         catch (IOException e) {

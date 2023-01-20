@@ -94,8 +94,8 @@ public class H2DriverManager extends ConnectionsH2 {
     }
 
 
-    // Этот метод сделанн через RowSet, метод сначала делает Select и добавляет затем добавляет строку,
-    // будем исспользовать этот метод для перезаписи
+    // Этот метод сделан через RowSet, метод сначала делает Select и добавляет затем добавляет строку,
+    // будем использовать этот метод для перезаписи
     private static void insertDoctorsRowSet(int iD, String doctor, int speciality) throws SQLException {
         // Точка с запятой ; в селекте приведет к ошибке.
         final String customerEntryQuery = "SELECT DOCTORS.ID, DOCTORS.FULL_NAME, DOCTORS.SPECIALITY FROM DOCTORS";
@@ -476,34 +476,26 @@ public class H2DriverManager extends ConnectionsH2 {
         }
     }
 
+    private static void insertData(boolean sw) throws SQLException {
+        if(sw) {
+            insertBatchSpecialties(Specialties.OTOLARYNGOLOGIST, Specialties.TRAUMATOLOGIST, Specialties.OCULIST, Specialties.SURGEON);
+            insertDataClients("Petrov Nikolay Vasilyevich", "Hand x-ray");
+            insertSpecialties("Roentgenologist");
+            insertDoctorsRowSet(5,"Petrov Semyonovich Semenov", 4);
+            insertTimeDoctor(1, 1, LocalTime.of(9, 0), LocalTime.of(18, 0));
+            insertClientReception(1,LocalDate.of(2023,12,1),LocalTime.of(9,0), 1);
+            insertTimeReception(1, LocalDate.of(2023,12,1),LocalTime.of(10,0),1);
+        }
+
+    }
+
     public static void main(String[] args) throws SQLException {
-        // isAfter Проверяет, является ли это время после указанного времени.
-        // isBefore Проверяет, не предшествует ли это время указанному времени.
-
-//        System.out.println(Time.valueOf(LocalTime.of(15,00)).toString().substring(0,5));
-//        System.out.println(LocalTime.of(9,00));
-//        System.out.println(LocalDate.of(2023,01,1).getDayOfWeek());
-//        System.out.println(DayOfWeek.SUNDAY);
-//        System.out.println(LocalDate.of(2023,01,1).getDayOfWeek().equals(DayOfWeek.SUNDAY));
-//        System.out.println(LocalTime.of(18,01).isAfter(LocalTime.of(18,00)));
-//        System.out.println(!LocalTime.of(10,00).isBefore(LocalTime.of(9,00)));
-//        System.out.println(LocalTime.of(8,59).minusMinutes(1));
-
-//        selectTimeDoctor(Specialties.ROENTGENOLOGIST);
-//        selectTimeReception(Specialties.ROENTGENOLOGIST,LocalDate.of(2023,12,1));
-//        makeAppointment(1,LocalDate.of(2023,12,1), LocalTime.of(9, 0),1);
-
 //        selectDoctorStatistics(1);
         createAllTables(false);
         dropAllTables(false);
+        insertData(true);
 //        System.out.println(makeAppointment(1,LocalDate.of(2023,12,1),LocalTime.of(10, 30),33));
-//        insertBatchSpecialties(Specialties.OTOLARYNGOLOGIST, Specialties.TRAUMATOLOGIST, Specialties.OCULIST, Specialties.SURGEON);
-//        updateTimeReception(1, LocalDate.of(2023,12,1), LocalTime.of(10, 30),1);
-//        insertDataClients("Petrov Nikolay Vasilyevich", "Hand x-ray");
-//        insertSpecialties("Roentgenologist");
-//        insertDoctorsRowSet(5"Petrov Semyonovich Semenov", 4);
-//        insertTimeDoctor(1, 1, LocalTime.of(9, 0), LocalTime.of(18, 0));
-//        insertClientReception(1,LocalDate.of(2023,12,1),LocalTime.of(9,0), 1);
-//        insertTimeReception(1, LocalDate.of(2023,12,1),LocalTime.of(10,0),1);
+        updateTimeReception(1, LocalDate.of(2023,12,1), LocalTime.of(10, 30),1);
+
     }
 }

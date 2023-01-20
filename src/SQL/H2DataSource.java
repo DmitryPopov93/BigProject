@@ -4,11 +4,9 @@ import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
-import javax.xml.crypto.Data;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.Hashtable;
 
 
 import org.apache.commons.dbcp.cpdsadapter.DriverAdapterCPDS;
@@ -20,20 +18,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 //Класс для работы с пулом соединений JDBC
 public class H2DataSource extends ConnectionsH2 {
-
-
-    private static DataSource getDataSourceConnectionWithJNDI() throws NamingException, ClassNotFoundException {
-        final String dataSourceName = "myDataSource";
-        String sp = "com.sun.jndi.fscontext.RefFSContextFactory";
-        DataSource dataSource = getDataSourceConnection();
-        Hashtable env = new Hashtable();
-        env.put (Context.INITIAL_CONTEXT_FACTORY, sp);
-        Context context = new InitialContext(env);
-        context.rebind(dataSourceName , dataSource);
-        return (DataSource) context.lookup(dataSourceName);
-    }
-
-
     private static DataSource getDataSourceConnection() throws ClassNotFoundException, NamingException {
         //https://javarush.com/groups/posts/2650-ispoljhzovanie-jndi-v-java
         //https://se.ifmo.ru/~ad/Education_Information/Comp_Based_Inf_Systems/Practic_5/DataSource.html
@@ -42,8 +26,9 @@ public class H2DataSource extends ConnectionsH2 {
         //Context context = new InitialContext();
         //DataSource dataSource = (DataSource) context.lookup(DB_URL);
 
+        //TODO: почему именно такой класс драйвера?
 
-        // Класс для драйвера к нашему JDBC, для Pool из lib commons-dbcp-1.4.jar
+        // Драйвер от Н2 к нашему JDBC, для Pool из lib commons-dbcp-1.4.jar
         DriverAdapterCPDS driver = new DriverAdapterCPDS();
         // Настройки для драйвера
         driver.setDriver(DB_Driver);
@@ -70,7 +55,7 @@ public class H2DataSource extends ConnectionsH2 {
     @Test
     //Тест проверки соединения
     public void test() throws SQLException, ClassNotFoundException, NamingException {
-        try(Connection connection=getDataSourceConnectionWithJNDI().getConnection()) {
+        try(Connection connection=getDataSourceConnection().getConnection()) {
             //В случае успеха приходит 1
             assertTrue(connection.isValid(1),"True");
             //Проверка на закрытое соединение

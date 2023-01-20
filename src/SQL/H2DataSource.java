@@ -23,24 +23,19 @@ public class H2DataSource extends ConnectionsH2 {
 
 
     private static DataSource getDataSourceConnectionWithJNDI() throws NamingException, ClassNotFoundException {
-        final String dataSourceName = "myDataSource";
+        final String dataSourceName = "myDataSource2";
         String sp = "com.sun.jndi.fscontext.RefFSContextFactory";
         DataSource dataSource = getDataSourceConnection();
         Hashtable env = new Hashtable();
         env.put (Context.INITIAL_CONTEXT_FACTORY, sp);
         Context context = new InitialContext(env);
         context.rebind(dataSourceName , dataSource);
+        context.unbind("myDataSource");
         return (DataSource) context.lookup(dataSourceName);
     }
 
 
     private static DataSource getDataSourceConnection() throws ClassNotFoundException, NamingException {
-        //https://javarush.com/groups/posts/2650-ispoljhzovanie-jndi-v-java
-        //https://se.ifmo.ru/~ad/Education_Information/Comp_Based_Inf_Systems/Practic_5/DataSource.html
-        //https://coderlessons.com/articles/java/sozdanie-resursov-jndi-dlia-testirovaniia-junit-s-ispolzovaniem-spring
-        //получить соединение через jndi
-        //Context context = new InitialContext();
-        //DataSource dataSource = (DataSource) context.lookup(DB_URL);
 
 
         // Класс для драйвера к нашему JDBC, для Pool из lib commons-dbcp-1.4.jar

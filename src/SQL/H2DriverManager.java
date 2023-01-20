@@ -30,8 +30,8 @@ public class H2DriverManager extends ConnectionsH2 {
             preparedStatement.execute();
             System.out.println("Add client: result " + preparedStatement.getUpdateCount());
 
-            //getUpdateCount() - Извлекает текущий результат как количество обновлений; если результатом является
-            // ResultSet объект или результатов больше нет, возвращается -1.
+            //getUpdateCount() - Извлекает текущий результат как количество обновлений = executeUpdate();
+            // если результатом является ResultSet объект или результатов больше нет, возвращается -1.
 
             //getMoreResults() - Переходит к Statement следующему результату этого объекта, возвращает значение,
             // true если это ResultSet объект, и неявно закрывает все текущие ResultSet объекты, полученные методом getResultSet.
@@ -108,7 +108,7 @@ public class H2DriverManager extends ConnectionsH2 {
         }
     }
 
-    //TODO Сложность с выводом временем приема.
+    //TODO Сложность с выводом временем приема. Добавить обработку данных resultSet взять у Димы
     private static void selectInformationWithReception(String nameClient) throws SQLException, ClassNotFoundException {
         final String selectInformationWithReceptionQuery = "SELECT CLIENTS.FULL_NAME, CLIENTS.PROBLEM_INFO, DOCTORS.FULL_NAME, " +
                 "SPECIALTIES.SPECIALITY, TIME_RECEPTION.DATE_RECEPTION \" +\n" +
@@ -120,22 +120,26 @@ public class H2DriverManager extends ConnectionsH2 {
         }
     }
 
-    //Вызов процедуры informationWithReception в БД, реализация как метод selectInformationWithReception
-    private static void selectInformationWithReceptionUseProcedure(String nameClient) throws SQLException, ClassNotFoundException {
-        try (CallableStatement callableStatement = getDriverManagerConnectionPostgres().prepareCall("CALL public.informationWithReception (?)")) {
-            callableStatement.setString(1, nameClient);
-            System.out.println(callableStatement.execute());
+
+    //TODO Остается за скобками, переделать на функцию с процедуры
+    //Вызов функции informationWithReception в БД, реализация как метод selectInformationWithReception
+    private static void selectInformationWithReceptionUseFunction() throws SQLException, ClassNotFoundException {
+        try (CallableStatement callableStatement = getDriverManagerConnectionPostgres().prepareCall("{? = CALL public.countDoctors ()}")) {
+            callableStatement.registerOutParameter(1, Types.INTEGER);
+            callableStatement.execute();
+            System.out.println(callableStatement.getInt(1));
         }
 
 
     }
-    //Вызов процедуры, узнать количество докторов
-    private static void selectCountDoctorsUseProcedure() throws SQLException, ClassNotFoundException {
-        try (CallableStatement callableStatement = getDriverManagerConnectionPostgres().prepareCall("CALL public.countDoctors(?)")) {
-            callableStatement.registerOutParameter(1, java.sql.Types.VARCHAR);
-            callableStatement.executeQuery();
-            System.out.println(callableStatement.getString(1));
-
+    //Вызов процедуры, добавить клиента
+    private static void insertDataClientsUseProcedure() throws SQLException, ClassNotFoundException {
+        try (CallableStatement callableStatement = getDriverManagerConnectionPostgres().prepareCall("CALL public.addClient(?,?,?)")) {
+            callableStatement.setString(1, "Razumov Sergey Igorevich");
+            callableStatement.setString(2, "Teeth hurt");
+            callableStatement.registerOutParameter(3, java.sql.Types.INTEGER);
+            callableStatement.execute();
+            System.out.println(callableStatement.getInt(3));
         }
     }
 
@@ -157,6 +161,7 @@ public class H2DriverManager extends ConnectionsH2 {
         try (PreparedStatement preparedStatement = getDriverManagerConnectionPostgres().prepareStatement(selectTimeDoctorQuery)) {
             preparedStatement.setString(1, specialties.toString());
             System.out.println(preparedStatement.execute());
+
         }
     }
 
@@ -254,8 +259,6 @@ public class H2DriverManager extends ConnectionsH2 {
                         }
                     }
                 }
-
-
             }
         }
     }
@@ -266,7 +269,9 @@ public class H2DriverManager extends ConnectionsH2 {
         selectInformationWithReception("Ivanov Ivan Andreevich");
         createAllTables(false);
         dropAllTables(false);
-        selectCountDoctorsUseProcedure();
+        insertDataClientsUseProcedure();
+        selectInformationWithReceptionUseFunction();
+//        selectTimeDoctor(Specialties.Roentgenologist);
 //        insertDataClients("Ivanov Ivan Andreevich", "Chest x-ray");
 //        insertSpecialties("Roentgenologist");
 //        insertDoctors("Vasiliev Andrey Alexandrovich", 1);

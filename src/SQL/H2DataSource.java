@@ -4,7 +4,6 @@ import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
-import javax.xml.crypto.Data;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -20,9 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 //Класс для работы с пулом соединений JDBC
 public class H2DataSource extends ConnectionsH2 {
-
-
-    private static DataSource getDataSourceConnectionWithJNDI() throws NamingException, ClassNotFoundException {
+private static DataSource getDataSourceConnectionWithJNDI() throws NamingException, ClassNotFoundException {
         final String dataSourceName = "myDataSource2";
         String sp = "com.sun.jndi.fscontext.RefFSContextFactory";
         DataSource dataSource = getDataSourceConnection();
@@ -34,9 +31,7 @@ public class H2DataSource extends ConnectionsH2 {
         return (DataSource) context.lookup(dataSourceName);
     }
 
-
     private static DataSource getDataSourceConnection() throws ClassNotFoundException, NamingException {
-
 
         // Класс для драйвера к нашему JDBC, для Pool из lib commons-dbcp-1.4.jar
         DriverAdapterCPDS driver = new DriverAdapterCPDS();

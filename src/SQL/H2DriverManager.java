@@ -5,11 +5,16 @@ import org.h2.jdbc.JdbcSQLSyntaxErrorException;
 import org.postgresql.util.PSQLException;
 
 import javax.sql.rowset.CachedRowSet;
+import javax.sql.rowset.JdbcRowSet;
 import javax.sql.rowset.RowSetFactory;
 import javax.sql.rowset.RowSetProvider;
 import java.sql.*;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
 
 //Класс для работы без пула соединений JDBC
 public class H2DriverManager extends ConnectionsH2 {
@@ -99,7 +104,7 @@ public class H2DriverManager extends ConnectionsH2 {
         //        JdbcRowSet rowSet = new JdbcRowSetImpl(connection); Один из способов, с готовым соединением,
         //        не смог найти библиотеку
 
-        try (CachedRowSet rowSet = RowSetProvider.newFactory().createCachedRowSet()) {
+        try ( CachedRowSet rowSet = RowSetProvider.newFactory().createCachedRowSet()) {
 
             rowSet.setUrl(DB_URL);
             rowSet.setUsername(User_DB);
@@ -107,8 +112,19 @@ public class H2DriverManager extends ConnectionsH2 {
             rowSet.setCommand(customerEntryQuery);
             rowSet.execute();
 
+            while(rowSet.next()) {
+                System.out.println(rowSet.getInt(1) + " ," + rowSet.getString(2) + " ," + rowSet.getInt(3));
+            }
+            rowSet.beforeFirst();
+            System.out.println("-----------------------------------");
+
             // Этот тип операции может изменить только автономный RowSet
             // Сначала перемещаем указатель на пустую (новую) строку, текущая позиция запоминается
+            rowSet.absolute(3); //Перемещаем на 3ю строку
+            rowSet.moveToInsertRow(); // Перемещает курсор на вставляемую строку. Тоесть, если мы были перед 1й строкой,
+            // то он создаст создаваемую строку перед 1й, и при выводе результата через некст эта страка станет 1й,
+            // но сам инсерт пойдет в конец, если мы хотим, в вывод результата вставить в какое то место, то нужно
+            // перемещаться инсертом до него, вставлять и потом перемещаться уже, как нам надо
             rowSet.moveToInsertRow();
             rowSet.updateInt(1, iD);
             rowSet.updateString(2, doctor);
@@ -117,7 +133,7 @@ public class H2DriverManager extends ConnectionsH2 {
             rowSet.moveToCurrentRow(); // Возвращаем указатель на ту строку, где он был до вставки
 
             rowSet.beforeFirst(); //Перемещает курсор к началу этого ResultSet объекта, непосредственно перед первой строкой.
-            while (rowSet.next()) {
+            while(rowSet.next()) {
                 System.out.println(rowSet.getInt(1) + " ," + rowSet.getString(2) + " ," + rowSet.getInt(3));
             }
 
@@ -128,7 +144,7 @@ public class H2DriverManager extends ConnectionsH2 {
         }
     }
 
-    private static void insertTimeDoctor(int doctor, int dayReceipt, LocalTime startReception, LocalTime endReception) throws SQLException, ClassNotFoundException {
+    private static void insertTimeDoctor(int doctor, int dayReceipt, LocalTime startReception, LocalTime endReception) throws SQLException {
 
         final String customerEntryQuery = "Insert into Time_Doctors " +
                 "values" +
@@ -143,7 +159,7 @@ public class H2DriverManager extends ConnectionsH2 {
         }
     }
 
-    private static void insertClientReception(int doctor, LocalDate dateReception, LocalTime timeReception, int client) throws SQLException, ClassNotFoundException {
+    private static void insertClientReception(int doctor, LocalDate dateReception, LocalTime timeReception, int client) throws SQLException {
 
         final String customerEntryQuery = "Insert into CLIENTS_RECEPTION " +
                 "values" +
@@ -157,7 +173,7 @@ public class H2DriverManager extends ConnectionsH2 {
         }
     }
 
-    private static void insertTimeReception(int doctor, LocalDate dateReception, LocalTime timeReception, int client) throws SQLException, ClassNotFoundException {
+    private static void insertTimeReception(int doctor, LocalDate dateReception, LocalTime timeReception, int client) throws SQLException {
 
         final String customerEntryQuery = "Insert into TIME_RECEPTION" +
                 "(DOCTOR, DATE_RECEPTION, \"" + timeReception + "\")" +
@@ -233,7 +249,7 @@ public class H2DriverManager extends ConnectionsH2 {
     }
 
     // Update TIME_RECEPTION
-    private static void updateTimeReception(int doctor, LocalDate dateReception, LocalTime timeReception, int client) throws SQLException, ClassNotFoundException {
+    private static void updateTimeReception(int doctor, LocalDate dateReception, LocalTime timeReception, int client) throws SQLException {
         final String customerEntryQuery = "UPDATE TIME_RECEPTION \n" +
                 "SET\n" +
                 "\"" + timeReception + "\" = ?\n" +
@@ -344,7 +360,7 @@ public class H2DriverManager extends ConnectionsH2 {
     }
 
     // Запись клиента к доктору
-    private static int makeAppointment(int doctor, LocalDate dateReception, LocalTime timeReception, int client) throws SQLException, ClassNotFoundException {
+    private static int makeAppointment(int doctor, LocalDate dateReception, LocalTime timeReception, int client) throws SQLException {
 
         final String customerEntryQuery1 = "SELECT TIME_DOCTORS.DAY_RECEIPT, TIME_DOCTORS.START_RECEPTION, TIME_DOCTORS.END_RECEPTION  FROM TIME_DOCTORS\n" +
                 "WHERE TIME_DOCTORS.DOCTOR=?;";
@@ -416,7 +432,6 @@ public class H2DriverManager extends ConnectionsH2 {
             insertDataClientsUseProcedure("Lgunov Andrey Vasilyevich", "Headache");
         }
     }
-
 
     //Метод создания таблиц
     private static void createAllTables(boolean sw) throws SQLException, ClassNotFoundException {
@@ -509,6 +524,18 @@ public class H2DriverManager extends ConnectionsH2 {
     }
 
     public static void main(String[] args) throws SQLException, ClassNotFoundException {
+        // isAfter Проверяет, является ли это время после указанного времени.
+        // isBefore Проверяет, не предшествует ли это время указанному времени.
+
+//        System.out.println(Time.valueOf(LocalTime.of(15,00)).toString().substring(0,5));
+//        System.out.println(LocalTime.of(9,00));
+//        System.out.println(LocalDate.of(2023,01,1).getDayOfWeek());
+//        System.out.println(DayOfWeek.SUNDAY);
+//        System.out.println(LocalDate.of(2023,01,1).getDayOfWeek().equals(DayOfWeek.SUNDAY));
+//        System.out.println(LocalTime.of(18,01).isAfter(LocalTime.of(18,00)));
+//        System.out.println(!LocalTime.of(10,00).isBefore(LocalTime.of(9,00)));
+//        System.out.println(LocalTime.of(8,59).minusMinutes(1));
+
 //        selectTimeDoctor(Specialties.ROENTGENOLOGIST);
 //        selectTimeReception(Specialties.ROENTGENOLOGIST,LocalDate.of(2023,12,1));
 //        makeAppointment(1,LocalDate.of(2023,12,1), LocalTime.of(9, 0),1);
@@ -520,6 +547,14 @@ public class H2DriverManager extends ConnectionsH2 {
         selectCountDoctorsFunction();
 //        System.out.println(makeAppointment(1,LocalDate.of(2023,12,1),LocalTime.of(10, 30),33));
 //        updateTimeReception(1, LocalDate.of(2023,12,1), LocalTime.of(10, 30),1);
+//        insertBatchSpecialties(Specialties.OTOLARYNGOLOGIST, Specialties.TRAUMATOLOGIST, Specialties.OCULIST, Specialties.SURGEON);
+//        insertDoctorsRowSet(5,"Petrov Semyonovich Semenov", 4);
 
+//        insertDataClients("Petrov Nikolay Vasilyevich", "Hand x-ray");
+//        insertSpecialties("Roentgenologist");
+        insertDoctors("Doctor",1);
+        insertTimeDoctor(1, 1, LocalTime.of(9, 0), LocalTime.of(18, 0));
+        insertClientReception(1,LocalDate.of(2023,12,1),LocalTime.of(9,0), 1);
+        insertTimeReception(1, LocalDate.of(2023,12,1),LocalTime.of(10,0),1);
     }
 }

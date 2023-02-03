@@ -25,25 +25,56 @@ public class H2DriverManager extends ConnectionsH2 {
 
 
     //Вставляем данные в таблицу
+
+
     private static void insertDataClients(String fullName, String problemInfo) throws SQLException, ClassNotFoundException {
+
+        Connection connection = null;
 
         final String customerEntryQuery = "Insert into " +
                 "CLIENTS (FULL_NAME , PROBLEM_INFO) " +
-                "values (?, ?)";
-        try (PreparedStatement preparedStatement = getDriverManagerConnectionPostgres().prepareStatement(customerEntryQuery)) {
-            preparedStatement.setString(1, fullName);
-            preparedStatement.setString(2, problemInfo);
-            preparedStatement.execute();
-            System.out.println("Add client: result " + preparedStatement.getUpdateCount());
+                "values ('Dima', 'healh');";
+        try  {
+            connection = getDriverManagerConnectionPostgres();
+            connection.setAutoCommit(false);
+//            connection.beginRequest();
+            try (Statement preparedStatement = connection.createStatement()) {
+                preparedStatement.execute(customerEntryQuery);
+                connection.commit();
+                connection.setAutoCommit(true);
+                //getUpdateCount() - Извлекает текущий результат как количество обновлений; если результатом является
+                // ResultSet объект или результатов больше нет, возвращается -1.
 
-            //getUpdateCount() - Извлекает текущий результат как количество обновлений; если результатом является
-            // ResultSet объект или результатов больше нет, возвращается -1.
+                //getMoreResults() - Переходит к Statement следующему результату этого объекта, возвращает значение,
+                // true если это ResultSet объект, и неявно закрывает все текущие ResultSet объекты, полученные методом getResultSet.
 
-            //getMoreResults() - Переходит к Statement следующему результату этого объекта, возвращает значение,
-            // true если это ResultSet объект, и неявно закрывает все текущие ResultSet объекты, полученные методом getResultSet.
+                //getResultSet() - Извлекает текущий результат как ResultSet объект.
+            }
+            final String customerEntryQueryError = "Insert into " +
+                    "CLIENTS (FULL_NAME , PROBLEM_INFO) " +
+                    "values ('Dima', 'healh');";
+            try (Statement preparedStatement = connection.createStatement()) {
+                preparedStatement.execute(customerEntryQueryError);
+                System.out.println("Add client: result " + preparedStatement.getUpdateCount());
 
-            //getResultSet() - Извлекает текущий результат как ResultSet объект.
+                //getUpdateCount() - Извлекает текущий результат как количество обновлений; если результатом является
+                // ResultSet объект или результатов больше нет, возвращается -1.
+
+                //getMoreResults() - Переходит к Statement следующему результату этого объекта, возвращает значение,
+                // true если это ResultSet объект, и неявно закрывает все текущие ResultSet объекты, полученные методом getResultSet.
+
+                //getResultSet() - Извлекает текущий результат как ResultSet объект.
+
+            }
+            connection.rollback();
+            connection.close();
+        } catch (Throwable e) {
+            assert connection != null;
+            connection.rollback();
+            connection.close();
+
         }
+
     }
 
     private static void insertSpecialties(String specialties) throws SQLException, ClassNotFoundException {
@@ -144,7 +175,7 @@ public class H2DriverManager extends ConnectionsH2 {
         }
     }
 
-    private static void insertTimeDoctor(int doctor, int dayReceipt, LocalTime startReception, LocalTime endReception) throws SQLException {
+    private static void insertTimeDoctor(int doctor, int dayReceipt, LocalTime startReception, LocalTime endReception) throws SQLException, ClassNotFoundException {
 
         final String customerEntryQuery = "Insert into Time_Doctors " +
                 "values" +
@@ -159,7 +190,7 @@ public class H2DriverManager extends ConnectionsH2 {
         }
     }
 
-    private static void insertClientReception(int doctor, LocalDate dateReception, LocalTime timeReception, int client) throws SQLException {
+    private static void insertClientReception(int doctor, LocalDate dateReception, LocalTime timeReception, int client) throws SQLException, ClassNotFoundException {
 
         final String customerEntryQuery = "Insert into CLIENTS_RECEPTION " +
                 "values" +
@@ -173,7 +204,7 @@ public class H2DriverManager extends ConnectionsH2 {
         }
     }
 
-    private static void insertTimeReception(int doctor, LocalDate dateReception, LocalTime timeReception, int client) throws SQLException {
+    private static void insertTimeReception(int doctor, LocalDate dateReception, LocalTime timeReception, int client) throws SQLException, ClassNotFoundException {
 
         final String customerEntryQuery = "Insert into TIME_RECEPTION" +
                 "(DOCTOR, DATE_RECEPTION, \"" + timeReception + "\")" +
@@ -202,7 +233,7 @@ public class H2DriverManager extends ConnectionsH2 {
 
     //Вызов функции из БД вывести количество докторов в больнице
     private static void selectCountDoctorsFunction() throws SQLException, ClassNotFoundException {
-        try (CallableStatement callableStatement = getDriverManagerConnectionPostgres().prepareCall("{? = CALL public.countDoctors ()}")) {
+        try (CallableStatement callableStatement = getDriverManagerConnectionPostgres().prepareCall("{CALL public.countDoctors (?)}")) {
             callableStatement.registerOutParameter(1, Types.INTEGER);
             callableStatement.execute();
             System.out.println("result selectCountDoctorsFunction : " + callableStatement.getInt(1));
@@ -249,7 +280,7 @@ public class H2DriverManager extends ConnectionsH2 {
     }
 
     // Update TIME_RECEPTION
-    private static void updateTimeReception(int doctor, LocalDate dateReception, LocalTime timeReception, int client) throws SQLException {
+    private static void updateTimeReception(int doctor, LocalDate dateReception, LocalTime timeReception, int client) throws SQLException, ClassNotFoundException {
         final String customerEntryQuery = "UPDATE TIME_RECEPTION \n" +
                 "SET\n" +
                 "\"" + timeReception + "\" = ?\n" +
@@ -360,7 +391,7 @@ public class H2DriverManager extends ConnectionsH2 {
     }
 
     // Запись клиента к доктору
-    private static int makeAppointment(int doctor, LocalDate dateReception, LocalTime timeReception, int client) throws SQLException {
+    private static int makeAppointment(int doctor, LocalDate dateReception, LocalTime timeReception, int client) throws SQLException, ClassNotFoundException {
 
         final String customerEntryQuery1 = "SELECT TIME_DOCTORS.DAY_RECEIPT, TIME_DOCTORS.START_RECEPTION, TIME_DOCTORS.END_RECEPTION  FROM TIME_DOCTORS\n" +
                 "WHERE TIME_DOCTORS.DOCTOR=?;";
@@ -543,8 +574,9 @@ public class H2DriverManager extends ConnectionsH2 {
 //        selectDoctorStatistics(1);
         createAllTables(false);
         dropAllTables(false);
-        insertData(true);
-        selectCountDoctorsFunction();
+        insertData(false);
+//        selectCountDoctorsFunction();
+        insertDataClients("Petrov Nikolay Vasilyevich", "Hand x-ray");
 //        System.out.println(makeAppointment(1,LocalDate.of(2023,12,1),LocalTime.of(10, 30),33));
 //        updateTimeReception(1, LocalDate.of(2023,12,1), LocalTime.of(10, 30),1);
 //        insertBatchSpecialties(Specialties.OTOLARYNGOLOGIST, Specialties.TRAUMATOLOGIST, Specialties.OCULIST, Specialties.SURGEON);
@@ -552,9 +584,9 @@ public class H2DriverManager extends ConnectionsH2 {
 
 //        insertDataClients("Petrov Nikolay Vasilyevich", "Hand x-ray");
 //        insertSpecialties("Roentgenologist");
-        insertDoctors("Doctor",1);
-        insertTimeDoctor(1, 1, LocalTime.of(9, 0), LocalTime.of(18, 0));
-        insertClientReception(1,LocalDate.of(2023,12,1),LocalTime.of(9,0), 1);
-        insertTimeReception(1, LocalDate.of(2023,12,1),LocalTime.of(10,0),1);
+//        insertDoctors("Doctor",1);
+//        insertTimeDoctor(1, 1, LocalTime.of(9, 0), LocalTime.of(18, 0));
+//        insertClientReception(1,LocalDate.of(2023,12,1),LocalTime.of(9,0), 1);
+//        insertTimeReception(1, LocalDate.of(2023,12,1),LocalTime.of(10,0),1);
     }
 }
